@@ -83,9 +83,9 @@ const rankColors: Record<string, string> = {
 export default function EmployeeDetailPage({
   params,
 }: {
-  params: Promise<{ employeeId: string }>;
+  params: Promise<{ companyId: string; employeeId: string }>;
 }) {
-  const { employeeId } = use(params);
+  const { companyId, employeeId } = use(params);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +170,7 @@ export default function EmployeeDetailPage({
   return (
     <div className="max-w-6xl mx-auto print:max-w-none">
       <div className="mb-4 print:hidden">
-        <Link href="/evaluations" className="text-blue-600 hover:text-blue-800 text-sm">
+        <Link href={`/${companyId}/evaluations`} className="text-blue-600 hover:text-blue-800 text-sm">
           ← 評価一覧に戻る
         </Link>
       </div>

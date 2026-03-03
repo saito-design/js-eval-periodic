@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader, StatusBadge, OpenInNewWindowButton } from '@/components/common';
 import { Role, RoleLabels } from '@/lib/types';
@@ -35,6 +36,8 @@ const promotionLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function EvaluationsPage() {
+  const params = useParams();
+  const companyId = params.companyId as string;
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<EvaluationItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +89,7 @@ export default function EvaluationsPage() {
         description="社員ごとの評価結果を確認"
         actions={
           <OpenInNewWindowButton
-            url="/evaluations"
+            url={`/${companyId}/evaluations`}
             label="別ウィンドウで開く"
           />
         }
@@ -221,7 +224,7 @@ export default function EvaluationsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={`/evaluations/${item.employeeId}`}
+                        href={`/${companyId}/evaluations/${item.employeeId}`}
                         className="text-blue-600 hover:text-blue-800 text-sm"
                       >
                         詳細
@@ -260,7 +263,7 @@ export default function EvaluationsPage() {
                     <span className="ml-2">順位: {item.overallRank}位</span>
                   </div>
                   <Link
-                    href={`/evaluations/${item.employeeId}`}
+                    href={`/${companyId}/evaluations/${item.employeeId}`}
                     className="text-blue-600 hover:text-blue-800 text-sm"
                   >
                     詳細
