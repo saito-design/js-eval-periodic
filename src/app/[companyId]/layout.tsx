@@ -177,13 +177,13 @@ export default function CompanyLayout({
                 評価ルール
               </a>
               <div className="h-4 w-px bg-gray-300" />
-              <a
-                href={`${PORTAL_URL}?auth_token=${authToken}`}
+              <button
+                onClick={() => { window.close(); window.location.href = `${PORTAL_URL}?auth_token=${authToken}` }}
                 className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-800"
               >
                 <Home size={14} />
                 ポータル
-              </a>
+              </button>
             </nav>
           </div>
         </div>
