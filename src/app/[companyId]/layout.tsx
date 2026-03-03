@@ -7,15 +7,15 @@ import { Home } from 'lucide-react'
 const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'
 
 const COMPANY_CONFIG: Record<string, { name: string; displayName: string }> = {
-  junestory: {
-    name: 'junestory',
+  junestry: {
+    name: 'junestry',
     displayName: '株式会社ジュネストリー',
   },
 }
 
 // オーナーアカウント
 const OWNER_ACCOUNTS: Record<string, string> = {
-  'junestory': 'owner',
+  'junestry': 'owner',
 }
 
 function decodeToken(token: string): { role: string; company: string; exp: number } | null {
