@@ -327,9 +327,8 @@ export default function EmployeeDetailPage({
                   <th className="py-3 px-3 text-right font-medium text-gray-600">売上実績</th>
                   <th className="py-3 px-3 text-right font-medium text-gray-600">予算</th>
                   <th className="py-3 px-3 text-right font-medium text-gray-600">達成率</th>
-                  <th className="py-3 px-3 text-right font-medium text-gray-600">経費率</th>
                   <th className="py-3 px-3 text-center font-medium text-gray-600">売上Zone</th>
-                  <th className="py-3 px-3 text-center font-medium text-gray-600">Mng水準</th>
+                  <th className="py-3 px-3 text-center font-medium text-gray-600">コスト管理ランク<br /><span className="text-xs font-normal text-gray-400">（1〜10）</span></th>
                   <th className="py-3 px-3 text-right font-medium text-gray-600">Mngスコア</th>
                 </tr>
               </thead>
@@ -342,7 +341,6 @@ export default function EmployeeDetailPage({
                     <td className="py-2.5 px-3 text-right font-medium text-blue-600">{formatCurrency(m.salesActual)}</td>
                     <td className="py-2.5 px-3 text-right text-gray-500">{formatCurrency(m.salesBudget)}</td>
                     <td className="py-2.5 px-3 text-right text-gray-700">{formatPercent(m.salesRatio)}</td>
-                    <td className="py-2.5 px-3 text-right text-gray-700">{formatPercent(m.expenseRatio)}</td>
                     <td className="py-2.5 px-3 text-center font-medium text-gray-700">{m.salesZone}</td>
                     <td className="py-2.5 px-3 text-center text-gray-700">{m.mngLevel}</td>
                     <td className="py-2.5 px-3 text-right font-semibold text-gray-900">{m.mngScore}</td>
@@ -351,15 +349,15 @@ export default function EmployeeDetailPage({
               </tbody>
               <tfoot>
                 <tr className="bg-gray-50">
-                  <td colSpan={9} className="py-2.5 px-3 text-right font-medium text-gray-600">Mngスコア合計:</td>
+                  <td colSpan={8} className="py-2.5 px-3 text-right font-medium text-gray-600">Mngスコア合計:</td>
                   <td className="py-2.5 px-3 text-right font-bold text-gray-900">{formatNumber(data.mngScore)}</td>
                 </tr>
                 <tr className="bg-blue-50">
-                  <td colSpan={9} className="py-2.5 px-3 text-right font-medium text-gray-600">QSC加点:</td>
+                  <td colSpan={8} className="py-2.5 px-3 text-right font-medium text-gray-600">QSC加点:</td>
                   <td className="py-2.5 px-3 text-right font-bold text-blue-600">{formatNumber(data.qscBonus)}</td>
                 </tr>
                 <tr className="bg-blue-100">
-                  <td colSpan={9} className="py-3 px-3 text-right font-bold text-gray-800">定量評価計（Mng+QSC）:</td>
+                  <td colSpan={8} className="py-3 px-3 text-right font-bold text-gray-800">定量評価計（Mng+QSC）:</td>
                   <td className="py-3 px-3 text-right font-bold text-xl text-blue-700">{formatNumber(data.quantitativeScore)}</td>
                 </tr>
               </tfoot>
