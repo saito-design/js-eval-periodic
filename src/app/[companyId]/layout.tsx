@@ -3,6 +3,7 @@
 import { useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Home } from 'lucide-react'
+import { FeedbackButton } from '@/components/FeedbackButton'
 
 const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'
 
@@ -191,6 +192,7 @@ export default function CompanyLayout({
       <main className="max-w-7xl mx-auto px-6 py-6">
         {children}
       </main>
+      <FeedbackButton appId="teiryou" appName="定量定性評価" tokenKey={`auth_${companyId}`} />
     </>
   )
 }
