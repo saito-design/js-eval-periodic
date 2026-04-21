@@ -187,6 +187,9 @@ export default function CompanyLayout({
               <a href={`/${companyId}/evaluations`} className="text-sm text-gray-600 hover:text-gray-900">
                 評価一覧
               </a>
+              <a href={`/${companyId}/interviews`} className="text-sm text-gray-600 hover:text-gray-900">
+                面談記録
+              </a>
               {showAdminNav && (
                 <a href={`/${companyId}/rankings`} className="text-sm text-gray-600 hover:text-gray-900">
                   ランキング

@@ -92,6 +92,7 @@ export default function EmployeeDetailPage({
   const [data, setData] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [orgDiagnosis, setOrgDiagnosis] = useState<OrgDiagnosisData | null>(null);
+  const [interviewNotes, setInterviewNotes] = useState<{ noteId: string; date: string; interviewer: string; situation: string; issue: string; action: string; employeeComment: string }[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -116,6 +117,17 @@ export default function EmployeeDetailPage({
         const orgResult = await orgResponse.json();
         if (orgResult.success) {
           setOrgDiagnosis(orgResult.data);
+        }
+
+        // 面談記録（最新3件）
+        try {
+          const intRes = await fetch(`/api/interviews/${employeeId}`, { headers: authHeaders });
+          const intResult = await intRes.json();
+          if (intResult.success) {
+            setInterviewNotes(intResult.data.notes.slice(0, 3));
+          }
+        } catch {
+          // silently fail
         }
       } catch {
         setError('データの読み込みに失敗しました');
@@ -442,6 +454,48 @@ export default function EmployeeDetailPage({
                     ))}
                   </tbody>
                 </table>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 面談記録（最新3件） */}
+      {interviewNotes.length > 0 && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-base font-bold text-gray-800">【面談記録】</h2>
+            <Link href={`/${companyId}/interviews/${employeeId}`} className="text-sm text-teal-600 hover:text-teal-800">
+              すべての面談記録を見る →
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {interviewNotes.map(note => (
+              <div key={note.noteId} className="border border-gray-100 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-gray-800">{note.date}</span>
+                  <span className="text-xs text-gray-400">面談者: {note.interviewer}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  {note.situation && (
+                    <div>
+                      <div className="text-xs font-medium text-teal-600 mb-0.5">現状</div>
+                      <p className="text-gray-600 line-clamp-2">{note.situation}</p>
+                    </div>
+                  )}
+                  {note.issue && (
+                    <div>
+                      <div className="text-xs font-medium text-orange-600 mb-0.5">課題</div>
+                      <p className="text-gray-600 line-clamp-2">{note.issue}</p>
+                    </div>
+                  )}
+                  {note.action && (
+                    <div>
+                      <div className="text-xs font-medium text-blue-600 mb-0.5">アクション</div>
+                      <p className="text-gray-600 line-clamp-2">{note.action}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
