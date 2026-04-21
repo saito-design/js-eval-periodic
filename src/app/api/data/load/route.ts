@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readJson } from '@/lib/drive';
+import { getAuthFromRequest, isStoreRestricted } from '@/lib/auth-api';
 import {
   EmployeesData,
   StoresData,
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2025_H2';
+
+    const auth = getAuthFromRequest(request);
 
     // 並列でデータを読み込み
     const [
@@ -32,6 +35,16 @@ export async function GET(request: NextRequest) {
       readJson<QualitativeCategoriesData>('qualitative_categories.json'),
       readJson<AppSettings>('app_settings.json'),
     ]);
+
+    // store/staff ロールの場合、自店舗のデータのみに絞る
+    if (auth && isStoreRestricted(auth.role) && auth.storeId) {
+      employees.items = employees.items.filter(
+        (e) => e.storeId === auth.storeId
+      );
+      stores.items = stores.items.filter(
+        (s) => s.storeId === auth.storeId
+      );
+    }
 
     // 評価データは期間指定でオプショナルに読み込み
     let qualitativeScores: QualitativeScoresData | null = null;
