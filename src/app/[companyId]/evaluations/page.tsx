@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader, StatusBadge, OpenInNewWindowButton } from '@/components/common';
 import { Role, RoleLabels } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 
 interface EvaluationItem {
   employeeId: string;
@@ -38,6 +39,7 @@ const promotionLabels: Record<string, { label: string; color: string }> = {
 export default function EvaluationsPage() {
   const params = useParams();
   const companyId = params.companyId as string;
+  const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<EvaluationItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,9 @@ export default function EvaluationsPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/api/evaluations?period=2025_H2');
+        const response = await fetch('/api/evaluations?period=2025_H2', {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
         const result = await response.json();
 
         if (result.success) {

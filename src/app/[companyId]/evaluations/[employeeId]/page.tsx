@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 
 interface StoreRanking {
   store_code: string;
@@ -86,6 +87,7 @@ export default function EmployeeDetailPage({
   params: Promise<{ companyId: string; employeeId: string }>;
 }) {
   const { companyId, employeeId } = use(params);
+  const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -94,9 +96,14 @@ export default function EmployeeDetailPage({
   useEffect(() => {
     const loadData = async () => {
       try {
+        const authHeaders = { Authorization: `Bearer ${auth.token}` };
         const [evalResponse, orgResponse] = await Promise.all([
-          fetch(`/api/evaluations/${employeeId}?period=2025_H2`),
-          fetch('/api/org-diagnosis/ranking')
+          fetch(`/api/evaluations/${employeeId}?period=2025_H2`, {
+            headers: authHeaders,
+          }),
+          fetch('/api/org-diagnosis/ranking', {
+            headers: authHeaders,
+          })
         ]);
 
         const evalResult = await evalResponse.json();

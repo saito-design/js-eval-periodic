@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readJson } from '@/lib/drive';
 import { EvaluationResultsData, EvaluationResultItem } from '@/lib/types/results';
 import { Role } from '@/lib/types';
+import { getAuthFromRequest, isStoreRestricted } from '@/lib/auth-api';
 
 /** 評価タイプ */
 type EvaluationType = 'total' | 'quantitative' | 'qualitative';
@@ -121,20 +122,29 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2025_H2';
 
+    // 認証情報を取得
+    const auth = getAuthFromRequest(request);
+
     // 評価結果を読み込み
     const results = await readJson<EvaluationResultsData>(
       `evaluation_results_${period}.json`
     );
 
+    // store/staffロールの場合、自店舗のデータのみに絞る
+    let items = results.items;
+    if (auth && isStoreRestricted(auth.role) && auth.storeId) {
+      items = items.filter((item) => item.storeId === auth.storeId);
+    }
+
     // 利用可能な期間一覧を取得
     const availablePeriods = await getAvailablePeriods();
 
     // 役職別にフィルタ
-    const managers = results.items.filter((i) => i.role === 'manager');
-    const assistantManagers = results.items.filter(
+    const managers = items.filter((i) => i.role === 'manager');
+    const assistantManagers = items.filter(
       (i) => i.role === 'assistant_manager'
     );
-    const staffMembers = results.items.filter((i) => i.role === 'staff');
+    const staffMembers = items.filter((i) => i.role === 'staff');
 
     // 役職別×評価タイプ別ランキング生成
     const response: RankingResponse = {
@@ -158,9 +168,9 @@ export async function GET(request: NextRequest) {
         },
       },
       overall: {
-        total: generateRanking(results.items, 'total'),
-        quantitative: generateRanking(results.items, 'quantitative'),
-        qualitative: generateRanking(results.items, 'qualitative'),
+        total: generateRanking(items, 'total'),
+        quantitative: generateRanking(items, 'quantitative'),
+        qualitative: generateRanking(items, 'qualitative'),
       },
       availablePeriods,
     };

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeader, OpenInNewWindowButton } from '@/components/common';
 import { RoleLabels, Role } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 
 /** ランキング項目 */
 interface RankingEntry {
@@ -59,6 +60,7 @@ const evalTypeLabels: Record<EvalType, string> = {
 };
 
 export default function RankingsPage() {
+  const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RankingData | null>(null);
@@ -83,10 +85,14 @@ export default function RankingsPage() {
     }
   }, [comparePeriod]);
 
+  const authHeaders = { Authorization: `Bearer ${auth.token}` };
+
   const loadData = async (period: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/rankings?period=${period}`);
+      const response = await fetch(`/api/rankings?period=${period}`, {
+        headers: authHeaders,
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -108,7 +114,9 @@ export default function RankingsPage() {
 
   const loadHistoryData = async (period: string) => {
     try {
-      const response = await fetch(`/api/rankings?period=${period}`);
+      const response = await fetch(`/api/rankings?period=${period}`, {
+        headers: authHeaders,
+      });
       const result = await response.json();
       if (result.success) {
         setHistoryData((prev) => ({ ...prev, [period]: result.data }));

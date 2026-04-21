@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/common';
 import { RankThreshold, RankCode, PromotionRule } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 
 type TabType = 'rank' | 'promotion';
 
@@ -105,6 +106,7 @@ const roleLabels: Record<string, string> = {
 const ranks: RankCode[] = ['S', 'A', 'B', 'C', 'D', 'E'];
 
 export default function RulesPage() {
+  const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [simulating, setSimulating] = useState(false);
@@ -131,12 +133,14 @@ export default function RulesPage() {
   const [showPromotionSimulation, setShowPromotionSimulation] = useState(false);
   const [promotionSimViewTab, setPromotionSimViewTab] = useState<'changed' | 'all' | 'rules'>('rules');
 
+  const authHeaders = { Authorization: `Bearer ${auth.token}` };
+
   useEffect(() => {
     const loadRules = async () => {
       try {
         const [rankRes, promotionRes] = await Promise.all([
-          fetch('/api/rules/rank'),
-          fetch('/api/rules/promotion'),
+          fetch('/api/rules/rank', { headers: authHeaders }),
+          fetch('/api/rules/promotion', { headers: authHeaders }),
         ]);
         const rankData = await rankRes.json();
         const promotionData = await promotionRes.json();
@@ -218,7 +222,7 @@ export default function RulesPage() {
     try {
       const res = await fetch('/api/rules/rank/simulate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ thresholds: editThresholds, crossMatrix: editCrossMatrix }),
       });
       const data = await res.json();
@@ -242,7 +246,7 @@ export default function RulesPage() {
     try {
       const res = await fetch('/api/rules/rank', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           thresholds: editThresholds,
           crossMatrix: editCrossMatrix,
@@ -318,7 +322,7 @@ export default function RulesPage() {
     try {
       const res = await fetch('/api/rules/promotion/simulate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ rules: editPromotionRules }),
       });
       const data = await res.json();
@@ -342,7 +346,7 @@ export default function RulesPage() {
     try {
       const res = await fetch('/api/rules/promotion', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           rules: editPromotionRules,
           reason: promotionChangeReason || '昇降格設定を変更',

@@ -1,9 +1,16 @@
 'use client'
 
 import { useParams, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Home } from 'lucide-react'
 import { FeedbackButton } from '@/components/FeedbackButton'
+import {
+  AuthProvider,
+  decodeAuthToken,
+  isAdminRole,
+  type PortalRole,
+  type AuthInfo,
+} from '@/lib/auth-context'
 
 const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'
 
@@ -14,20 +21,12 @@ const COMPANY_CONFIG: Record<string, { name: string; displayName: string }> = {
   },
 }
 
-// オーナーアカウント
+// オーナーアカウント（直接ログイン用）
 const OWNER_ACCOUNTS: Record<string, string> = {
   'junestry': 'owner',
 }
 
-function decodeToken(token: string): { role: string; company: string; exp: number } | null {
-  try {
-    return JSON.parse(atob(token))
-  } catch {
-    return null
-  }
-}
-
-function generateToken(role: string, companyId: string): string {
+function generateToken(role: PortalRole, companyId: string): string {
   const payload = {
     role,
     company: companyId,
@@ -52,11 +51,25 @@ export default function CompanyLayout({
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
 
+  // デコード済み認証情報
+  const authInfo: AuthInfo | null = useMemo(() => {
+    if (!authToken) return null
+    const decoded = decodeAuthToken(authToken)
+    if (!decoded || decoded.exp <= Date.now()) return null
+    return {
+      role: decoded.role,
+      company: decoded.company,
+      storeId: decoded.storeId,
+      token: authToken,
+    }
+  }, [authToken])
+
   useEffect(() => {
     const urlToken = searchParams.get('auth_token')
 
     if (urlToken) {
-      const decoded = decodeToken(urlToken)
+      // ポータルから来た場合: ポータルトークンをそのまま使用（role/storeIdを保持）
+      const decoded = decodeAuthToken(urlToken)
       if (decoded && decoded.exp > Date.now() && decoded.company === companyId) {
         sessionStorage.setItem(`auth_${companyId}`, urlToken)
         setAuthToken(urlToken)
@@ -68,7 +81,7 @@ export default function CompanyLayout({
 
     const sessionToken = sessionStorage.getItem(`auth_${companyId}`)
     if (sessionToken) {
-      const decoded = decodeToken(sessionToken)
+      const decoded = decodeAuthToken(sessionToken)
       if (decoded && decoded.exp > Date.now() && decoded.company === companyId) {
         setAuthToken(sessionToken)
         setIsAuthorized(true)
@@ -85,7 +98,7 @@ export default function CompanyLayout({
     e.preventDefault()
     setLoginError('')
 
-    // オーナーアカウント確認
+    // オーナーアカウント確認（直接ログインは常にowner）
     if (loginId === companyId && password === OWNER_ACCOUNTS[companyId]) {
       const token = generateToken('owner', companyId)
       sessionStorage.setItem(`auth_${companyId}`, token)
@@ -155,6 +168,9 @@ export default function CompanyLayout({
     )
   }
 
+  // ロールに応じてナビを制限
+  const showAdminNav = authInfo ? isAdminRole(authInfo.role) : false
+
   return (
     <>
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -171,12 +187,16 @@ export default function CompanyLayout({
               <a href={`/${companyId}/evaluations`} className="text-sm text-gray-600 hover:text-gray-900">
                 評価一覧
               </a>
-              <a href={`/${companyId}/rankings`} className="text-sm text-gray-600 hover:text-gray-900">
-                ランキング
-              </a>
-              <a href={`/${companyId}/rules`} className="text-sm text-gray-600 hover:text-gray-900">
-                評価ルール
-              </a>
+              {showAdminNav && (
+                <a href={`/${companyId}/rankings`} className="text-sm text-gray-600 hover:text-gray-900">
+                  ランキング
+                </a>
+              )}
+              {showAdminNav && (
+                <a href={`/${companyId}/rules`} className="text-sm text-gray-600 hover:text-gray-900">
+                  評価ルール
+                </a>
+              )}
               <div className="h-4 w-px bg-gray-300" />
               <button
                 onClick={() => { window.close(); window.location.href = `${PORTAL_URL}?auth_token=${authToken}` }}
@@ -190,7 +210,11 @@ export default function CompanyLayout({
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-6">
-        {children}
+        {authInfo ? (
+          <AuthProvider value={authInfo}>{children}</AuthProvider>
+        ) : (
+          children
+        )}
       </main>
       <FeedbackButton appId="teiryou" appName="定量定性評価" tokenKey={`auth_${companyId}`} />
     </>

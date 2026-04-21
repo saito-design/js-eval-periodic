@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useAuth, isAdminRole } from '@/lib/auth-context';
 
 interface LoadStatus {
   employees: number;
@@ -13,18 +14,23 @@ interface LoadStatus {
 export default function DashboardPage() {
   const params = useParams();
   const companyId = params.companyId as string;
+  const auth = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<LoadStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recalculating, setRecalculating] = useState(false);
 
+  const authHeaders = { Authorization: `Bearer ${auth.token}` };
+
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/data/load?period=2025_H2');
+      const response = await fetch('/api/data/load?period=2025_H2', {
+        headers: authHeaders,
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -35,7 +41,9 @@ export default function DashboardPage() {
           period: result.data.period,
         });
 
-        const evalResponse = await fetch('/api/evaluations?period=2025_H2');
+        const evalResponse = await fetch('/api/evaluations?period=2025_H2', {
+          headers: authHeaders,
+        });
         const evalResult = await evalResponse.json();
         if (evalResult.success) {
           setStatus((prev) =>
@@ -59,6 +67,7 @@ export default function DashboardPage() {
       setRecalculating(true);
       const response = await fetch('/api/evaluations/recalculate?period=2025_H2', {
         method: 'POST',
+        headers: authHeaders,
       });
       const result = await response.json();
       if (result.success) {
@@ -115,13 +124,15 @@ export default function DashboardPage() {
         >
           評価一覧を見る
         </a>
-        <button
-          onClick={handleRecalculate}
-          disabled={recalculating}
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
-        >
-          {recalculating ? '再計算中...' : '全評価を再計算'}
-        </button>
+        {isAdminRole(auth.role) && (
+          <button
+            onClick={handleRecalculate}
+            disabled={recalculating}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+          >
+            {recalculating ? '再計算中...' : '全評価を再計算'}
+          </button>
+        )}
       </div>
     </div>
   );

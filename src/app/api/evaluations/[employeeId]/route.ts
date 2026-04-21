@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readJson } from '@/lib/drive';
 import { EvaluationResultsData, EmployeesData, StoresData } from '@/lib/types';
+import { getAuthFromRequest, isStoreRestricted } from '@/lib/auth-api';
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +11,9 @@ export async function GET(
     const { employeeId } = await params;
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2025_H2';
+
+    // 認証情報を取得
+    const auth = getAuthFromRequest(request);
 
     const [evaluationResults, employees, stores] = await Promise.all([
       readJson<EvaluationResultsData>(`evaluation_results_${period}.json`),
@@ -26,6 +30,16 @@ export async function GET(
         { success: false, error: 'Employee not found' },
         { status: 404 }
       );
+    }
+
+    // store/staffロールの場合、自店舗以外のデータへのアクセスを拒否
+    if (auth && isStoreRestricted(auth.role) && auth.storeId) {
+      if (result.storeId !== auth.storeId) {
+        return NextResponse.json(
+          { success: false, error: 'この評価データにアクセスする権限がありません' },
+          { status: 403 }
+        );
+      }
     }
 
     const employee = employees.items.find((e) => e.employeeId === employeeId);

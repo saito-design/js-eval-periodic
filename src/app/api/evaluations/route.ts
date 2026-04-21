@@ -5,11 +5,15 @@ import {
   EmployeesData,
   StoresData,
 } from '@/lib/types';
+import { getAuthFromRequest, isStoreRestricted } from '@/lib/auth-api';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '2025_H2';
+
+    // 認証情報を取得（任意: ヘッダーがなくても従来互換で動作）
+    const auth = getAuthFromRequest(request);
 
     // 評価結果と関連マスタを読み込み
     const [evaluationResults, employees, stores] = await Promise.all([
@@ -19,7 +23,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // 社員・店舗情報を結合
-    const enrichedItems = evaluationResults.items.map((item) => {
+    let enrichedItems = evaluationResults.items.map((item) => {
       const employee = employees.items.find(
         (e) => e.employeeId === item.employeeId
       );
@@ -32,6 +36,13 @@ export async function GET(request: NextRequest) {
         storeName: store?.storeName ?? '',
       };
     });
+
+    // store/staffロールの場合、自店舗のデータのみに絞る
+    if (auth && isStoreRestricted(auth.role) && auth.storeId) {
+      enrichedItems = enrichedItems.filter(
+        (item) => item.storeId === auth.storeId
+      );
+    }
 
     return NextResponse.json({
       success: true,
